@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>.\sdl\winlib15\sdl2.lib;.\sdl\winlib15\sdl2main.lib;.\sdl\winlib15\SDL2_mixer.dll;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>.\sdl\winlib15\sdl2.lib;.\sdl\winlib15\sdl2main.lib;.\sdl\winlib15\SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(ProjectDir)sdl\winlib15\*.dll" $(OutDir)"
@@ -105,9 +105,6 @@ copy /y "$(ProjectDir)*.bmp" $(OutDir)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="sdl\include\SDL_mixer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
