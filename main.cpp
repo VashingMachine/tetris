@@ -725,7 +725,7 @@ int main(int argc, char **argv) {
 		return 1;
 		};
 
-	if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) == -1)
+	if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 9192) == -1)
 	{
 		return false;
 	}
@@ -833,6 +833,7 @@ int main(int argc, char **argv) {
 	getRandomBlocks(fallTab);
 	fillMainTabWithZero(allBlocksTab);
 
+	Mix_PlayChannel(-1, deploySound, 100);
 	while(!quit) {
 		SDL_FillRect(screen, NULL, czarny);
 		t2 = SDL_GetTicks();
@@ -1007,6 +1008,9 @@ int main(int argc, char **argv) {
 	SDL_DestroyTexture(scrtex);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
+
+	Mix_FreeChunk(deploySound);
+	Mix_CloseAudio();
 
 	SDL_Quit();
 	return 0;
