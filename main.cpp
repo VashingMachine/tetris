@@ -7,6 +7,8 @@
 extern "C" {
 #include"./sdl/include/SDL.h"
 #include"./sdl/include/SDL_main.h"
+#include"./sdl/include/SDL_mixer.h"
+
 }
 
 double roundr(double fValue) 
@@ -709,6 +711,7 @@ int main(int argc, char **argv) {
 	SDL_Texture *scrtex;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
+	Mix_Chunk *deploySound;
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		printf("SDL_Init error: %s\n", SDL_GetError());
@@ -721,6 +724,11 @@ int main(int argc, char **argv) {
 		printf("SDL_CreateWindowAndRenderer error: %s\n", SDL_GetError());
 		return 1;
 		};
+
+	if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) == -1)
+	{
+		return false;
+	}
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -843,6 +851,7 @@ int main(int argc, char **argv) {
 				removeFullLines(allBlocksTab, checkForFullLines(allBlocksTab), &prizeCounter);
 				prize += countPrize(&prizeCounter, currentLevel);
 				preventFromMoving = false;
+
 				if (checkForEnd(y)) {
 					pauseON = true;
 					preventFromMoving = true;
