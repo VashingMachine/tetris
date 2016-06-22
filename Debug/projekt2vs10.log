@@ -1,0 +1,20 @@
+﻿Build started 15.12.2015 16:59:03.
+     1>Project "C:\Users\ktozt\Downloads\szablon2_15\szablon2\projekt2vs10.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I.\sdl\include\ /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>c:\users\ktozt\downloads\szablon2_15\szablon2\main.cpp(195): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+     1>c:\users\ktozt\downloads\szablon2_15\szablon2\main.cpp(212): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+     1>c:\users\ktozt\downloads\szablon2_15\szablon2\main.cpp(214): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+         c:\program files (x86)\windows kits\10\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\ktozt\Downloads\szablon2_15\szablon2\Debug\projekt2vs10.exe" /INCREMENTAL /NOLOGO .\sdl\winlib\sdl2.lib .\sdl\winlib\sdl2main.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\ktozt\Downloads\szablon2_15\szablon2\Debug\projekt2vs10.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\ktozt\Downloads\szablon2_15\szablon2\Debug\projekt2vs10.lib" /MACHINE:X86 Debug\main.obj
+     1>sdl2main.lib(SDL_windows_main.obj) : error LNK2019: unresolved external symbol __imp__fprintf referenced in function _ShowError
+     1>sdl2main.lib(SDL_windows_main.obj) : error LNK2019: unresolved external symbol __imp____iob_func referenced in function _ShowError
+     1>C:\Users\ktozt\Downloads\szablon2_15\szablon2\Debug\projekt2vs10.exe : fatal error LNK1120: 2 unresolved externals
+     1>Done Building Project "C:\Users\ktozt\Downloads\szablon2_15\szablon2\projekt2vs10.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.88
