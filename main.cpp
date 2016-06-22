@@ -729,6 +729,8 @@ int main(int argc, char **argv) {
 	{
 		return false;
 	}
+
+	deploySound = Mix_LoadWAV("sounds/sound1.wav");
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
