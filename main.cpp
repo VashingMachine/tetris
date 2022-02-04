@@ -4,12 +4,11 @@
 #include<string.h>
 #include<stdlib.h>
 #include<time.h>
-extern "C" {
-#include"./sdl/include/SDL.h"
-#include"./sdl/include/SDL_main.h"
-#include"./sdl/include/SDL_mixer.h"
+#include<iostream>
+#include <emscripten.h>
+#include "SDL.h"
+#include "SDL_main.h"
 
-}
 
 double roundr(double fValue) 
 {
@@ -21,8 +20,8 @@ double roundr(double fValue)
 #define SCREEN_HEIGHT	800
 int czarny, zielony, niebieski, czerwony, bialy, ciemny, fioletowy, jasny, pomaranczowy, oliwkowy;
 
-// narysowanie napisu txt na powierzchni screen, zaczynaj¹c od punktu (x, y)
-// charset to bitmapa 128x128 zawieraj¹ca znaki
+// narysowanie napisu txt na powierzchni screen, zaczynajï¿½c od punktu (x, y)
+// charset to bitmapa 128x128 zawierajï¿½ca znaki
 void DrawString(SDL_Surface *screen, int x, int y, const char *text,
                 SDL_Surface *charset) {
 	int px, py, c;
@@ -45,7 +44,7 @@ void DrawString(SDL_Surface *screen, int x, int y, const char *text,
 		};
 	};
 // narysowanie na ekranie screen powierzchni sprite w punkcie (x, y)
-// (x, y) to punkt œrodka obrazka sprite na ekranie
+// (x, y) to punkt ï¿½rodka obrazka sprite na ekranie
 void DrawSurface(SDL_Surface *screen, SDL_Surface *sprite, int x, int y) {
 	SDL_Rect dest;
 	dest.x = x - sprite->w / 2;
@@ -59,8 +58,8 @@ void DrawPixel(SDL_Surface *surface, int x, int y, Uint32 color) {
 	Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
 	*(Uint32 *)p = color;
 	};
-// rysowanie linii o d³ugoœci l w pionie (gdy dx = 0, dy = 1) 
-// b¹dŸ poziomie (gdy dx = 1, dy = 0)
+// rysowanie linii o dï¿½ugoï¿½ci l w pionie (gdy dx = 0, dy = 1) 
+// bï¿½dï¿½ poziomie (gdy dx = 1, dy = 0)
 void DrawLine(SDL_Surface *screen, int x, int y, int l, int dx, int dy, Uint32 color) {
 	for(int i = 0; i < l; i++) {
 		DrawPixel(screen, x, y, color);
@@ -68,7 +67,7 @@ void DrawLine(SDL_Surface *screen, int x, int y, int l, int dx, int dy, Uint32 c
 		y += dy;
 		};
 	};
-// rysowanie prostok¹ta o d³ugoœci boków l i k
+// rysowanie prostokï¿½ta o dï¿½ugoï¿½ci bokï¿½w l i k
 void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k,
                    Uint32 outlineColor, Uint32 fillColor) {
 	int i;
@@ -96,11 +95,11 @@ typedef struct {
 #define CHARS_IN_NAME 10
 #define X0 10
 #define Y0 25
-int TPX; //sta³e które ustawia program do ustawienia interfejsu
+int TPX; //staï¿½e ktï¿½re ustawia program do ustawienia interfejsu
 #define NX 15 //ile kratek w poziomie
 #define NY 30 //ile kratek w pionie
 #define N 4 //spadajaca tablica ma N x N
-#define INF_W 7 // //ile szerokoœci jednego klocka ma mieæ pasek po boku
+#define INF_W 7 // //ile szerokoï¿½ci jednego klocka ma mieï¿½ pasek po boku
 #define LEVEL_CHANGE 30.0 //po ilu sekundach zmieni sie poziom
 #define DIFICULTY 0.9 //im mniej, tym trudniej
 #define STATEMENT_HEIGHT 10
@@ -530,10 +529,10 @@ bool addToScores(int *iScores, int prize, char ***scores, char *playerName) {
 			continue;
 		}
 		else if (i>thatLine - 1) {
-			sprintf(temp[i], (*scores)[i - 1]);
+			sprintf(temp[i], "%s", (*scores)[i - 1]);
 			continue;
 		}
-		sprintf(temp[i], (*scores)[i]);
+		sprintf(temp[i], "%s", (*scores)[i]);
 	}
 	for (int i = 0; i<LINES; i++) {
 		free((*scores)[i]);
@@ -698,319 +697,334 @@ void loadALL(int tab[][NY + N], int fallTab[][N], int *x, int *y, int *currentLe
 	subDouble(temp, tickTimer);
 	subDouble(temp, worldTime);
 }
-#ifdef __cplusplus
-extern "C"
-#endif
-int main(int argc, char **argv) {
-	int t1, t2, quit, frames, rc;
-	double delta, worldTime, fpsTimer, fps;
-	srand(time(NULL));
-	SDL_Event event;
-	SDL_Surface *screen, *charset;
-	SDL_Surface *eti, *eti_2;
-	SDL_Texture *scrtex;
-	SDL_Window *window;
-	SDL_Renderer *renderer;
-	Mix_Chunk *deploySound;
 
-	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+struct Tetris {
+    int t1, t2, quit, frames, rc;
+    double delta, worldTime, fpsTimer, fps;
+    SDL_Event event;
+    SDL_Surface *screen, *charset;
+    SDL_Surface *eti, *eti_2;
+    SDL_Texture *scrtex;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    double speedX = 2;
+    int allBlocksTab[NX + N][NY + N];
+    int fallTab[N][N];
+    char text[128];
+    int x, y;
+    double xDistance, yDistance;
+    double TICK;
+    double baseTICK = BASE_DIFICULTY;
+    double tickTimer = 0;
+    bool preventFromMoving = false;
+    bool pauseON = false;
+    bool getingName = false;
+    bool showStatement = false;
+    int currentLevel = 1;
+    int prizeCounter = 0;
+    int prize = 0;
+    int loadCounter = 3;
+    int actualStage;
+
+    int *iScores;
+    char **scores;
+    char *playerName;
+    int nameIterator = 0;
+    rect_t rect_info;
+    rect_t rect_statement;
+
+
+    void mainLoop();
+};
+
+void Tetris::mainLoop() {
+    SDL_FillRect(screen, NULL, czarny);
+    t2 = SDL_GetTicks();
+    delta = (t2 - t1) * 0.001;
+    t1 = t2;
+
+    stabilizeX(&x, &xDistance, speedX, baseTICK, delta);
+    stabilizeY(&y, &yDistance, TICK, delta);
+    fpsTimer += delta;
+    if(!pauseON) tickTimer += delta;
+    if(!pauseON) worldTime += delta;
+    countFrames(&fpsTimer, &fps, &frames);
+    if (tickTimer > TICK) {
+        if (check_collison(fallTab, allBlocksTab, x, y + 1)) {
+            y++;
+        } else {
+            addBlocksToMainTab(fallTab, allBlocksTab, x, y);
+            removeFullLines(allBlocksTab, checkForFullLines(allBlocksTab), &prizeCounter);
+            prize += countPrize(&prizeCounter, currentLevel);
+            preventFromMoving = false;
+
+            if (checkForEnd(y)) {
+                pauseON = true;
+                preventFromMoving = true;
+                showStatement = true;
+                actualStage = stage(iScores, prize);
+                if (actualStage <= LINES) getingName = true;
+            }
+            currentLevel = setLevel(&worldTime, &baseTICK, false);
+            setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
+            getRandomBlocks(fallTab);
+        }
+        tickTimer = 0;
+    }
+
+    DrawNet(screen, ciemny);
+    DrawCircuit(screen, bialy);
+    DrawAllBlocks(screen, allBlocksTab);
+    DrawFallingBlocks(screen, yDistance, xDistance, x, y, fallTab);
+    DrawHelpfulLine(screen, xDistance, fallTab);
+    DrawCircuitInfo(screen, rect_info, bialy);
+    DrawInfo(screen, charset, text, rect_info, currentLevel, worldTime, prize, scores, fps, loadCounter);
+    if (showStatement) {
+        DrawStatementRect(screen, rect_statement);
+        DrawStatementInfo(screen, charset, text, rect_statement, prize, actualStage, playerName);
+    }
+
+
+    SDL_UpdateTexture(scrtex, NULL, screen->pixels, screen->pitch);
+    SDL_RenderCopy(renderer, scrtex, NULL, NULL);
+    SDL_RenderPresent(renderer);
+
+    while(SDL_PollEvent(&event)) {
+
+        switch(event.type) {
+            case SDL_KEYDOWN:
+                if (getingName) {
+                    if (event.key.keysym.sym >= 97 && event.key.keysym.sym <= 122) { //maï¿½e a i maï¿½e z
+                        if (nameIterator < 10) {
+                            playerName[nameIterator] = event.key.keysym.sym - 32; //aby z malych zrobic duze
+                            nameIterator++;
+                        }
+                    } else if (event.key.keysym.sym == SDLK_BACKSPACE) {
+                        if (nameIterator > 0) {
+                            nameIterator--;
+                            playerName[nameIterator] = 0;
+                        }
+                    } else if (event.key.keysym.sym == SDLK_RETURN) {
+                        pauseON = false;
+                        preventFromMoving = false;
+                        showStatement = false;
+                        getingName = false;
+                        if (addToScores(iScores, prize, &scores, playerName)) saveScoreToFIle(scores);
+
+                        subScores(&iScores, scores);
+                        free(playerName);
+                        playerName = newName();
+                        nameIterator = 0;
+
+                        worldTime = 0;
+                        prize = 0;
+                        loadCounter = 3;
+
+                        currentLevel = setLevel(&worldTime, &baseTICK, true);
+                        setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
+                        fillMainTabWithZero(allBlocksTab);
+                        getRandomBlocks(fallTab);
+
+                    }
+                } else {
+                    if (event.key.keysym.sym == SDLK_ESCAPE) quit = 1;
+                    else if (event.key.keysym.sym == SDLK_UP) {}
+                    else if (event.key.keysym.sym == SDLK_DOWN) {
+                        if (!preventFromMoving) {
+                            TICK = 0.02;
+                            preventFromMoving = true;
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_RIGHT) {
+                        if (check_collison(fallTab, allBlocksTab, x + 1, y) && !preventFromMoving) {
+                            x++;
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_LEFT) {
+                        if (check_collison(fallTab, allBlocksTab, x - 1, y) && !preventFromMoving) {
+                            x--;
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_SPACE) {
+                        if (!preventFromMoving) {
+                            rotateFalltab(fallTab);
+                            if (!check_collison(fallTab, allBlocksTab, x, y)) {
+                                for (int i = 0; i < 3; i++) {
+                                    rotateFalltab(fallTab);
+                                }
+                            }
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_s) {
+                        if (loadCounter > 0) {
+                            loadCounter--;
+                            saveALL(allBlocksTab, fallTab, x, y, xDistance, yDistance, TICK, baseTICK, tickTimer,
+                                    worldTime, currentLevel, prizeCounter, prize);
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_l) {
+                        loadALL(allBlocksTab, fallTab, &x, &y, &currentLevel, &prizeCounter, &prize,
+                                &xDistance, &yDistance, &TICK, &baseTICK, &tickTimer, &worldTime);
+                    }
+                    else if (event.key.keysym.sym == SDLK_RETURN) {
+                        if (showStatement) {
+
+                            pauseON = false;
+                            preventFromMoving = false;
+                            showStatement = false;
+
+                            loadCounter = 3;
+                            currentLevel = 1;
+
+                            worldTime = 0;
+                            prize = 0;
+
+                            currentLevel = setLevel(&worldTime, &baseTICK, true);
+                            setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
+                            fillMainTabWithZero(allBlocksTab);
+                            getRandomBlocks(fallTab);
+
+                        }
+                    }
+                    else if (event.key.keysym.sym == SDLK_p) {
+                        pauseON = !pauseON;
+                        preventFromMoving = !preventFromMoving;
+                    }
+                }
+                break;
+            case SDL_KEYUP:
+                if (event.key.keysym.sym == SDLK_DOWN) {
+
+                }
+                break;
+            case SDLK_ESCAPE:
+                quit = 1;
+                break;
+        };
+    };
+    frames++;
+}
+
+void RenderLoopCallback(void *arg) {
+    static_cast<Tetris*>(arg)->mainLoop();
+}
+
+int main(int argc, char **argv) {
+    srand(time(NULL));
+    Tetris tetris{};
+//	Mix_Chunk *deploySound;
+
+	if(SDL_Init(SDL_INIT_EVERYTHING & ~(SDL_INIT_TIMER | SDL_INIT_HAPTIC)) != 0) {
 		printf("SDL_Init error: %s\n", SDL_GetError());
 		return 1;
 		}
-	rc = SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0,
-	                                 &window, &renderer);
-	if(rc != 0) {
+	tetris.rc = SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0,
+	                                 &tetris.window, &tetris.renderer);
+	if(tetris.rc != 0) {
 		SDL_Quit();
 		printf("SDL_CreateWindowAndRenderer error: %s\n", SDL_GetError());
 		return 1;
 		};
 
-	if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 9192) == -1)
-	{
-		return false;
-	}
+//	if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 9192) == -1)
+//	{
+//		return false;
+//	}
 
-	deploySound = Mix_LoadWAV("sounds/sound1.wav");
+//	deploySound = Mix_LoadWAV("sounds/sound1.wav");
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderSetLogicalSize(tetris.renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+	SDL_SetRenderDrawColor(tetris.renderer, 0, 0, 0, 255);
 
-	SDL_SetWindowTitle(window, "Szablon do zdania drugiego 2014");
+	SDL_SetWindowTitle(tetris.window, "Szablon do zdania drugiego 2014");
 
 
-	screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
+	tetris.screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
 	                              0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 
-	scrtex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+    tetris.scrtex = SDL_CreateTexture(tetris.renderer, SDL_PIXELFORMAT_ARGB8888,
 	                           SDL_TEXTUREACCESS_STREAMING,
 	                           SCREEN_WIDTH, SCREEN_HEIGHT);
 
 
-	// wy³¹czenie widocznoœci kursora myszy
 	SDL_ShowCursor(SDL_DISABLE);
 
 	// wczytanie obrazka cs8x8.bmp
-	charset = SDL_LoadBMP("./cs8x8.bmp");
-	if(charset == NULL) {
+    tetris.charset = SDL_LoadBMP("./cs8x8.bmp");
+	if(tetris.charset == NULL) {
 		printf("SDL_LoadBMP(cs8x8.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
+		SDL_FreeSurface(tetris.screen);
+		SDL_DestroyTexture(tetris.scrtex);
+		SDL_DestroyWindow(tetris.window);
+		SDL_DestroyRenderer(tetris.renderer);
 		SDL_Quit();
 		return 1;
 		};
-	SDL_SetColorKey(charset, true, 0x000000);
+	SDL_SetColorKey(tetris.charset, true, 0x000000);
 	//tu ustawiam interfejs
-	//ile szerokoœci jednego klocka ma mieæ pasek po boku
+	//ile szerokoï¿½ci jednego klocka ma mieï¿½ pasek po boku
 	TPX = (SCREEN_WIDTH-40) / (NX + INF_W);
 	if (SCREEN_HEIGHT < 40 + NY*TPX) {
 		TPX = (SCREEN_HEIGHT - 40) / NY;
 	}
-	char text[128];
-	czarny = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-	bialy = SDL_MapRGB(screen->format, 0xFF, 0xFF, 0xFF);
-	ciemny = SDL_MapRGB(screen->format, 0x14, 0x24, 0x1A);
-	fioletowy = SDL_MapRGB(screen->format, 0x16, 0x3F, 0x60);
-	jasny = SDL_MapRGB(screen->format, 0xDC, 0xD2, 0xD1);
-	czerwony = SDL_MapRGB(screen->format, 0xFF, 0x00, 0x00);
-	zielony = SDL_MapRGB(screen->format, 0x42, 0xAE, 0x6B);
-	niebieski = SDL_MapRGB(screen->format, 0x11, 0x11, 0xCC);
-	oliwkowy = SDL_MapRGB(screen->format, 0x19, 0xF0, 0x9B);
-	pomaranczowy = SDL_MapRGB(screen->format, 0xF6, 0x9F, 0x13);
-	
-	t1 = SDL_GetTicks();
-	frames = 0;
-	fpsTimer = 0;
-	fps = 0;
-	quit = 0;
-	worldTime = 0;
+	czarny = SDL_MapRGB(tetris.screen->format, 0x00, 0x00, 0x00);
+	bialy = SDL_MapRGB(tetris.screen->format, 0xFF, 0xFF, 0xFF);
+	ciemny = SDL_MapRGB(tetris.screen->format, 0x14, 0x24, 0x1A);
+	fioletowy = SDL_MapRGB(tetris.screen->format, 0x16, 0x3F, 0x60);
+	jasny = SDL_MapRGB(tetris.screen->format, 0xDC, 0xD2, 0xD1);
+	czerwony = SDL_MapRGB(tetris.screen->format, 0xFF, 0x00, 0x00);
+	zielony = SDL_MapRGB(tetris.screen->format, 0x42, 0xAE, 0x6B);
+	niebieski = SDL_MapRGB(tetris.screen->format, 0x11, 0x11, 0xCC);
+	oliwkowy = SDL_MapRGB(tetris.screen->format, 0x19, 0xF0, 0x9B);
+	pomaranczowy = SDL_MapRGB(tetris.screen->format, 0xF6, 0x9F, 0x13);
+
+    tetris.t1 = SDL_GetTicks();
+    tetris.frames = 0;
+    tetris.fpsTimer = 0;
+    tetris.fps = 0;
+    tetris.quit = 0;
+    tetris.worldTime = 0;
 	//zmienne "mechaniczne"
-	double speedX = 2;
-	int allBlocksTab[NX + N][NY + N];
-	int fallTab[N][N];
+
 	
-	rect_t rect_info;
-	rect_info.x = X0 + TPX*NX + 10;
-	rect_info.y = NY - 8;
-	rect_info.width = SCREEN_WIDTH - rect_info.x - 10;
-	rect_info.length = TPX * NY + 8;
+	tetris.rect_info.x = X0 + TPX*NX + 10;
+    tetris.rect_info.y = NY - 8;
+    tetris.rect_info.width = SCREEN_WIDTH - tetris.rect_info.x - 10;
+    tetris.rect_info.length = TPX * NY + 8;
 
-	rect_t rect_statement;
-	rect_statement.x = (SCREEN_WIDTH - STATEMENT_WIDTH * TPX) / 2;
-	rect_statement.y = (SCREEN_HEIGHT - STATEMENT_HEIGHT * TPX) / 2;
-	rect_statement.width = STATEMENT_WIDTH * TPX;
-	rect_statement.length = STATEMENT_HEIGHT * TPX;
+    tetris.rect_statement.x = (SCREEN_WIDTH - STATEMENT_WIDTH * TPX) / 2;
+    tetris.rect_statement.y = (SCREEN_HEIGHT - STATEMENT_HEIGHT * TPX) / 2;
+    tetris.rect_statement.width = STATEMENT_WIDTH * TPX;
+    tetris.rect_statement.length = STATEMENT_HEIGHT * TPX;
 
 
-	int x, y;
-	double xDistance, yDistance;
-	double TICK;
-	double baseTICK = BASE_DIFICULTY;
-	double tickTimer = 0;
-	bool preventFromMoving = false;
-	bool pauseON = false;
-	bool getingName = false;
-	bool showStatement = false;
-	int currentLevel = 1;
-	int prizeCounter = 0;
-	int prize = 0;
-	int loadCounter = 3;
 
-	int *iScores;
-	char **scores;
-	char *playerName;
-	int nameIterator = 0;
-	playerName = newName();
+	tetris.playerName = newName();
 
-	int actualStage;
 
-	getScores(&scores);
-	subScores(&iScores, scores);
+	getScores(&tetris.scores);
+	subScores(&tetris.iScores, tetris.scores);
 
-	setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
-	getRandomBlocks(fallTab);
-	fillMainTabWithZero(allBlocksTab);
+	setDefault(&tetris.x, &tetris.y, &tetris.xDistance, &tetris.yDistance, &tetris.TICK, tetris.baseTICK);
+	getRandomBlocks(tetris.fallTab);
+	fillMainTabWithZero(tetris.allBlocksTab);
+//
+//    emscripten_set_main_loop(&lambda->ptr, 60, 1);
+    emscripten_set_main_loop_arg(&RenderLoopCallback, &tetris, -1, 1);
 
-	Mix_PlayChannel(-1, deploySound, 100);
-	while(!quit) {
-		SDL_FillRect(screen, NULL, czarny);
-		t2 = SDL_GetTicks();
-		delta = (t2 - t1) * 0.001;
-		t1 = t2;
-		
-		stabilizeX(&x, &xDistance, speedX, baseTICK, delta);
-		stabilizeY(&y, &yDistance, TICK, delta);
-		fpsTimer += delta;
-		if(!pauseON) tickTimer += delta;
-		if(!pauseON) worldTime += delta;
-		countFrames(&fpsTimer, &fps, &frames);
-		if (tickTimer > TICK) {
-			if (check_collison(fallTab, allBlocksTab, x, y + 1)) {
-				y++;
-			} else {
-				addBlocksToMainTab(fallTab, allBlocksTab, x, y);
-				removeFullLines(allBlocksTab, checkForFullLines(allBlocksTab), &prizeCounter);
-				prize += countPrize(&prizeCounter, currentLevel);
-				preventFromMoving = false;
+	// Mix_PlayChannel(-1, deploySound, 100);
 
-				if (checkForEnd(y)) {
-					pauseON = true;
-					preventFromMoving = true;
-					showStatement = true;
-					actualStage = stage(iScores, prize);
-					if (actualStage <= LINES) getingName = true;
-				} 
-				currentLevel = setLevel(&worldTime, &baseTICK, false);
-				setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
-				getRandomBlocks(fallTab);
-			}
-			tickTimer = 0;
-		}
-
-		DrawNet(screen, ciemny);
-		DrawCircuit(screen, bialy);
-		DrawAllBlocks(screen, allBlocksTab);
-		DrawFallingBlocks(screen, yDistance, xDistance, x, y, fallTab);
-		DrawHelpfulLine(screen, xDistance, fallTab);
-		DrawCircuitInfo(screen, rect_info, bialy);
-		DrawInfo(screen, charset, text, rect_info, currentLevel, worldTime, prize, scores, fps, loadCounter);
-		if (showStatement) {
-			DrawStatementRect(screen, rect_statement);
-			DrawStatementInfo(screen, charset, text, rect_statement, prize, actualStage, playerName);
-		}
-		
-
-		SDL_UpdateTexture(scrtex, NULL, screen->pixels, screen->pitch);
-		SDL_RenderCopy(renderer, scrtex, NULL, NULL);
-		SDL_RenderPresent(renderer);
-
-		while(SDL_PollEvent(&event)) {
-
-			switch(event.type) {
-				case SDL_KEYDOWN:
-					if (getingName) {
-						if (event.key.keysym.sym >= 97 && event.key.keysym.sym <= 122) { //ma³e a i ma³e z
-							if (nameIterator < 10) {
-								playerName[nameIterator] = event.key.keysym.sym - 32; //aby z malych zrobic duze
-								nameIterator++;
-							}
-						} else if (event.key.keysym.sym == SDLK_BACKSPACE) {
-							if (nameIterator > 0) {
-								nameIterator--;
-								playerName[nameIterator] = 0;
-							}
-						} else if (event.key.keysym.sym == SDLK_RETURN) {
-							pauseON = false;
-							preventFromMoving = false;
-							showStatement = false;
-							getingName = false;
-							if (addToScores(iScores, prize, &scores, playerName)) saveScoreToFIle(scores);
-
-							subScores(&iScores, scores);
-							free(playerName);
-							playerName = newName();
-							nameIterator = 0;
-
-							worldTime = 0;
-							prize = 0;
-							loadCounter = 3;
-
-							currentLevel = setLevel(&worldTime, &baseTICK, true);
-							setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
-							fillMainTabWithZero(allBlocksTab);
-							getRandomBlocks(fallTab);
-							
-						}
-					} else {
-						if (event.key.keysym.sym == SDLK_ESCAPE) quit = 1;
-						else if (event.key.keysym.sym == SDLK_UP) {}
-						else if (event.key.keysym.sym == SDLK_DOWN) {
-							if (!preventFromMoving) {
-								TICK = 0.02;
-								preventFromMoving = true;
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_RIGHT) {
-							if (check_collison(fallTab, allBlocksTab, x + 1, y) && !preventFromMoving) {
-								x++; 
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_LEFT) {
-							if (check_collison(fallTab, allBlocksTab, x - 1, y) && !preventFromMoving) {
-								x--; 
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_SPACE) {
-							if (!preventFromMoving) {
-								rotateFalltab(fallTab);
-								if (!check_collison(fallTab, allBlocksTab, x, y)) {
-									for (int i = 0; i < 3; i++) {
-										rotateFalltab(fallTab);
-									}
-								}
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_s) {
-							if (loadCounter > 0) {
-								loadCounter--;
-								saveALL(allBlocksTab, fallTab, x, y, xDistance, yDistance, TICK, baseTICK, tickTimer,
-									worldTime, currentLevel, prizeCounter, prize);
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_l) {
-							loadALL(allBlocksTab, fallTab, &x, &y, &currentLevel, &prizeCounter, &prize,
-								&xDistance, &yDistance, &TICK, &baseTICK, &tickTimer, &worldTime);
-						}
-						else if (event.key.keysym.sym == SDLK_RETURN) {
-							if (showStatement) {
-
-								pauseON = false;
-								preventFromMoving = false;
-								showStatement = false;
-
-								loadCounter = 3;
-								currentLevel = 1;
-								
-								worldTime = 0;
-								prize = 0;
-
-								currentLevel = setLevel(&worldTime, &baseTICK, true);
-								setDefault(&x, &y, &xDistance, &yDistance, &TICK, baseTICK);
-								fillMainTabWithZero(allBlocksTab);
-								getRandomBlocks(fallTab);
-								
-							}
-						}
-						else if (event.key.keysym.sym == SDLK_p) {
-							pauseON = !pauseON;
-							preventFromMoving = !preventFromMoving;
-						}
-					}
-					break;
-				case SDL_KEYUP:
-					if (event.key.keysym.sym == SDLK_DOWN) {
-						
-					}
-					break;
-				case SDLK_ESCAPE:
-					quit = 1;
-					break;
-				};
-			};
-		frames++;
-		};
 
 	// zwolnienie powierzchni
-	SDL_FreeSurface(charset);
-	SDL_FreeSurface(screen);
-	SDL_DestroyTexture(scrtex);
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
+	SDL_FreeSurface(tetris.charset);
+	SDL_FreeSurface(tetris.screen);
+	SDL_DestroyTexture(tetris.scrtex);
+	SDL_DestroyRenderer(tetris.renderer);
+	SDL_DestroyWindow(tetris.window);
 
-	Mix_FreeChunk(deploySound);
-	Mix_CloseAudio();
+//	Mix_FreeChunk(deploySound);
+//	Mix_CloseAudio();
 
 	SDL_Quit();
 	return 0;
